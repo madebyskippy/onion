@@ -7,6 +7,7 @@ using UnityEngine.UI;
 public class manager : MonoBehaviour {
 
 	[SerializeField] Text seqtext;
+	[SerializeField] Animator anim;
 
 	GameObject[] frames;
 	int numActive;
@@ -58,6 +59,10 @@ public class manager : MonoBehaviour {
 
 		if (check ()) {
 			Debug.Log ("win!!!");
+			for (int i = 0; i < frames.Length; i++) {
+				frames [i].SetActive (false);
+			}
+			anim.Play ("ending");
 			seqtext.text = "win!!!!!!!!!!";
 		}
 
