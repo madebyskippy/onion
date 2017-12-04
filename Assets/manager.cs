@@ -8,6 +8,9 @@ public class manager : MonoBehaviour {
 
 	[SerializeField] Text seqtext;
 	[SerializeField] Animator anim;
+	[SerializeField] Image mousedot;
+	[SerializeField] RectTransform[] knobs;
+	[SerializeField] Canvas canvas;
 
 	GameObject[] frames;
 	int numActive;
@@ -16,7 +19,7 @@ public class manager : MonoBehaviour {
 	char[] keys = new char[10]{'Q','W','E','R','T','Y','U','I','O','P'}; //just used for getting input
 
 	int[] sequence = new int[10]{0,1,2,3,4,5,6,7,8,9}; //used for getting keypress > frame shown
-	string seqstring = ""; //the actual answer to the sequence
+	string seqstring = "QWERTYUIOP"; //the actual answer to the sequence
 
 	// Use this for initialization
 	void Start () {
@@ -30,7 +33,7 @@ public class manager : MonoBehaviour {
 			sr.sprite = s [i] as Sprite;
 			frameInput.Add (i);
 		}
-		randomizeSequence ();
+//		randomizeSequence ();
 
 	}
 	
@@ -68,6 +71,33 @@ public class manager : MonoBehaviour {
 
 		if (Input.GetKeyDown (KeyCode.Space)) {
 			SceneManager.LoadScene ("prototype");
+		}
+
+		if (Input.GetMouseButton (0)) {
+			Vector3 mouseP = Input.mousePosition;
+			mousedot.rectTransform.position = mouseP;
+			for (int i = 0; i < knobs.Length; i++) {
+				float distance = Vector3.Distance (mouseP, knobs [i].position);
+				if (distance < 0.5f*knobs [i].rect.width*canvas.scaleFactor) {
+					//angle between that and vector pointing y+ (that's my angle 0)
+					//need sign, whether it's to right or left of it ...
+					float offset = 0;
+					float sign = 1f;
+					if (mouseP.x < knobs [i].position.x) {
+						offset = 360;
+						sign = -1f;
+					}
+					Vector3 up = knobs[i].position - new Vector3(knobs[i].position.x,knobs[i].position.y+distance,knobs[i].position.z);
+					Vector3 mouse = knobs[i].position-mouseP;
+					float angle = Vector3.Angle (up, mouse)*sign+offset;
+
+					int step = (int)(angle / 360f * sequence.Length);
+					Debug.Log (step);
+
+					frameInput.Remove (step);
+					frameInput.Insert (0, step);
+				}
+			}
 		}
 	}
 
