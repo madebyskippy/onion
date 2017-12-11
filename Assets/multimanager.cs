@@ -12,7 +12,7 @@ public class multimanager : MonoBehaviour {
 	[SerializeField] Canvas canvas;
 
 	GameObject[][] frames;
-	int numActive;
+	int[] numActive;
 	List<int>[] frameInput;
 
 	int numseq = 3;
@@ -20,9 +20,10 @@ public class multimanager : MonoBehaviour {
 	// Use this for initialization
 	void Start () {
 		seqtext.text = "";
-		numActive = 3;
 		frames = new GameObject[numseq][];
 		frameInput = new List<int>[numseq];
+
+		numActive = new int[numseq];
 
 		for (int j = 0; j < numseq; j++) {
 			Object[] s = Resources.LoadAll ("seq"+(j+1).ToString(), typeof(Sprite));
@@ -34,6 +35,8 @@ public class multimanager : MonoBehaviour {
 				sr.sprite = s [i] as Sprite;
 				frameInput[j].Add (i);
 			}
+			numActive[j] = 0;
+			frameInput [j].Insert (0, -1);
 		}
 	}
 	
@@ -42,16 +45,19 @@ public class multimanager : MonoBehaviour {
 
 		for (int k = 0; k < numseq; k++) {
 			for (int j = 0; j < frameInput[k].Count; j++) {
-				if (j < numActive) {
+				if (j < numActive[k]) {
 					frames [k] [frameInput [k][j]].SetActive (true);
+					frames [k] [frameInput [k] [j]].GetComponent<SpriteRenderer> ().color = new Color (1f, 1f, 1f, 1f - (j * 0.4f));
 				} else {
-					frames [k] [frameInput [k][j]].SetActive (false);
+					if (frameInput [k] [j] != -1) {
+						frames [k] [frameInput [k] [j]].SetActive (false);
+					}
 				}
 			}
 		}
 
 		if (Input.GetKeyDown (KeyCode.Space)) {
-			SceneManager.LoadScene ("prototype");
+			SceneManager.LoadScene ("multiple");
 		}
 
 		if (Input.GetMouseButton (0)) {
@@ -60,8 +66,6 @@ public class multimanager : MonoBehaviour {
 			for (int i = 0; i < knobs.Length; i++) {
 				float distance = Vector3.Distance (mouseP, knobs [i].position);
 				if (distance < 0.5f*knobs [i].rect.width*canvas.scaleFactor) {
-					//angle between that and vector pointing y+ (that's my angle 0)
-					//need sign, whether it's to right or left of it ...
 					float offset = 0;
 					float sign = 1f;
 					if (mouseP.x < knobs [i].position.x) {
@@ -72,8 +76,18 @@ public class multimanager : MonoBehaviour {
 					Vector3 mouse = knobs[i].position-mouseP;
 					float angle = Vector3.Angle (up, mouse)*sign+offset;
 
+					knobs [i].rotation = Quaternion.Euler (new Vector3 (0f,0f,-angle));
+
 					int step = (int)(angle / 360f * frames[i].Length);
 					Debug.Log (step);
+
+					if (numActive [i] < 3 && frameInput[i][0] != step) {
+						Debug.Log (numActive [i]);
+						numActive [i] = (int)Mathf.Min (numActive [i] + 1, 3);
+						if (frameInput [i] [0] == -1) {
+							frameInput [i].RemoveAt (0);
+						}
+					}
 
 					frameInput[i].Remove (step);
 					frameInput[i].Insert (0, step);
